@@ -1,36 +1,35 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Vibe Link - AI 原生数字名片生成器 (MVP)
 
-## Getting Started
+> **快速交付实践：** 本项目旨在验证“使用 AI 工具链快速将想法转化为可部署产品”的 Vibe Coding 工作流。
 
-First, run the development server:
+## 🎯 交付目标 (MVP)
+*   **产品名称：** Vibe Link (个人链接聚合页)
+*   **目标：** 提供一个高颜值、移动端优先的模板，用户可实时编辑内容。
+*   **核心亮点：** 从设计到部署，全程使用 AI 辅助开发，注重交付效率而非手工代码量。
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 🌐 线上演示 (Demo)
+🔗 **点击访问：[你的 Vercel 链接]** 
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🛠️ Vibe Coding 工作流与技术栈
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 1. 技术栈
+*   **核心框架：** Next.js (TypeScript)
+*   **样式：** Tailwind CSS (符合现代前端趋势)
+*   **部署：** Vercel (实现零配置 CI/CD)
 
-## Learn More
+### 2. AI 工具链 (最关键的面试点)
+本项目是 Cursor/v0/Claude 的实战应用：
 
-To learn more about Next.js, take a look at the following resources:
+| 阶段 | 使用工具 | 核心指令 (Vibe Coding Prompt) |
+| :--- | :--- | :--- |
+| **UI/UX 设计** | `v0.dev` | "设计一个极简主义、暗黑模式的 Link-in-Bio 界面，React + Tailwind。" |
+| **逻辑构建** | `Cursor` (Composer) | "将静态组件重构为动态状态，添加左侧编辑表单和右侧实时预览功能。" |
+| **部署交付** | `Vercel` + `Git` | "通过 Vercel 自动化部署 GitHub 上的 main 分支。" |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🚀 Getting Started (原模板已删除)
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+请参阅 Vercel 部署文档，本项目使用 Next.js App Router 架构。
