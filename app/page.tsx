@@ -31,6 +31,51 @@ type ProfileData = {
   links: LinkItem[]
 }
 
+// 主题类型
+type Theme = "dark" | "aurora"
+
+// 主题配置
+const themeConfig: Record<
+  Theme,
+  {
+    name: string
+    background: string
+    foreground: string
+    mutedForeground: string
+    border: string
+    primary: string
+    gradientOrbs: {
+      top: string
+      bottom: string
+    }
+  }
+> = {
+  dark: {
+    name: "深色模式",
+    background: "bg-zinc-900",
+    foreground: "text-zinc-50",
+    mutedForeground: "text-zinc-400",
+    border: "border-zinc-700",
+    primary: "bg-blue-500",
+    gradientOrbs: {
+      top: "bg-blue-500/20",
+      bottom: "bg-purple-500/10",
+    },
+  },
+  aurora: {
+    name: "极光模式",
+    background: "bg-gradient-to-br from-indigo-950 via-purple-950 to-pink-950",
+    foreground: "text-white",
+    mutedForeground: "text-purple-200",
+    border: "border-purple-500/30",
+    primary: "bg-gradient-to-r from-pink-500 to-violet-500",
+    gradientOrbs: {
+      top: "bg-pink-500/30",
+      bottom: "bg-cyan-500/20",
+    },
+  },
+}
+
 // 图标映射
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Github,
@@ -47,14 +92,19 @@ function ProfileHeader({
   avatarUrl,
   name,
   bio,
+  theme,
 }: {
   avatarUrl: string
   name: string
   bio: string
+  theme: Theme
 }) {
+  const themeStyle = themeConfig[theme]
   return (
     <div className="flex flex-col items-center text-center space-y-4">
-      <div className="relative w-24 h-24 rounded-full overflow-hidden ring-4 ring-background shadow-lg">
+      <div
+        className={`relative w-24 h-24 rounded-full overflow-hidden ring-4 ${themeStyle.background} shadow-lg`}
+      >
         <Image
           src={avatarUrl}
           alt={name}
@@ -64,8 +114,12 @@ function ProfileHeader({
         />
       </div>
       <div className="space-y-2">
-        <h1 className="text-2xl font-bold text-foreground">{name}</h1>
-        <p className="text-sm text-muted-foreground max-w-sm">{bio}</p>
+        <h1 className={`text-2xl font-bold ${themeStyle.foreground}`}>
+          {name}
+        </h1>
+        <p className={`text-sm ${themeStyle.mutedForeground} max-w-sm`}>
+          {bio}
+        </p>
       </div>
     </div>
   )
@@ -76,32 +130,44 @@ function LinkCard({
   href,
   icon: Icon,
   title,
+  theme,
 }: {
   href: string
   icon: React.ComponentType<{ className?: string }>
   title: string
+  theme: Theme
 }) {
+  const themeStyle = themeConfig[theme]
+  const isAurora = theme === "aurora"
   return (
     <a
       href={href}
-      className="flex items-center gap-3 w-full p-4 bg-background/80 backdrop-blur-sm border border-border rounded-lg hover:bg-background/90 hover:border-foreground/20 transition-all duration-200 shadow-sm hover:shadow-md"
+      className={`flex items-center gap-3 w-full p-4 ${
+        isAurora
+          ? "bg-white/10 backdrop-blur-sm border-purple-400/30 hover:bg-white/15 hover:border-purple-400/50"
+          : "bg-zinc-800/80 backdrop-blur-sm border-zinc-700 hover:bg-zinc-800 hover:border-zinc-600"
+      } rounded-lg transition-all duration-200 shadow-sm hover:shadow-md`}
     >
-      <Icon className="w-5 h-5 text-foreground flex-shrink-0" />
-      <span className="font-medium text-foreground">{title}</span>
+      <Icon className={`w-5 h-5 ${themeStyle.foreground} flex-shrink-0`} />
+      <span className={`font-medium ${themeStyle.foreground}`}>{title}</span>
     </a>
   )
 }
 
 // 预览组件
-function Preview({ data }: { data: ProfileData }) {
+function Preview({ data, theme }: { data: ProfileData; theme: Theme }) {
+  const themeStyle = themeConfig[theme]
   return (
-    <div className="flex-1 flex flex-col items-center justify-center px-4 py-12">
+    <div
+      className={`flex-1 flex flex-col items-center justify-center px-4 py-12 ${themeStyle.background} transition-colors duration-300`}
+    >
       <div className="w-full max-w-md space-y-8">
         {/* Profile Section */}
         <ProfileHeader
           avatarUrl={data.avatarUrl}
           name={data.name}
           bio={data.bio}
+          theme={theme}
         />
 
         {/* Links Section */}
@@ -114,6 +180,7 @@ function Preview({ data }: { data: ProfileData }) {
                 href={link.href}
                 icon={Icon}
                 title={link.title}
+                theme={theme}
               />
             )
           })}
@@ -127,9 +194,13 @@ function Preview({ data }: { data: ProfileData }) {
 function EditorForm({
   data,
   onChange,
+  theme,
+  onThemeChange,
 }: {
   data: ProfileData
   onChange: (data: ProfileData) => void
+  theme: Theme
+  onThemeChange: (theme: Theme) => void
 }) {
   const updateField = (field: keyof ProfileData, value: any) => {
     onChange({ ...data, [field]: value })
@@ -161,6 +232,19 @@ function EditorForm({
   return (
     <div className="h-full overflow-y-auto p-6 space-y-6">
       <h2 className="text-2xl font-bold text-foreground mb-6">编辑资料</h2>
+
+      {/* 主题选择器 */}
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-foreground">主题选择</label>
+        <select
+          value={theme}
+          onChange={(e) => onThemeChange(e.target.value as Theme)}
+          className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+        >
+          <option value="dark">深色模式 (Dark Mode)</option>
+          <option value="aurora">极光模式 (Aurora)</option>
+        </select>
+      </div>
 
       {/* 头像URL */}
       <div className="space-y-2">
@@ -329,37 +413,48 @@ export default function LinkInBioPage() {
   })
 
   const [isEditing, setIsEditing] = useState(false)
+  const [theme, setTheme] = useState<Theme>("dark")
+  const themeStyle = themeConfig[theme]
 
   return (
     <main className="min-h-svh flex flex-col">
-      {/* Background gradient orbs */}
+      {/* Background gradient orbs - 根据主题动态变化 */}
       <div className="fixed inset-0 -z-10 overflow-hidden">
-        <div className="absolute top-1/4 -left-20 w-72 h-72 bg-primary/20 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 -right-20 w-80 h-80 bg-primary/10 rounded-full blur-3xl" />
+        <div
+          className={`absolute top-1/4 -left-20 w-72 h-72 ${themeStyle.gradientOrbs.top} rounded-full blur-3xl transition-all duration-500`}
+        />
+        <div
+          className={`absolute bottom-1/4 -right-20 w-80 h-80 ${themeStyle.gradientOrbs.bottom} rounded-full blur-3xl transition-all duration-500`}
+        />
       </div>
 
       {/* 桌面端：左右两栏布局 */}
       <div className="hidden lg:flex h-screen">
         {/* 左侧编辑器 */}
         <div className="w-1/2 border-r border-border bg-background/50 backdrop-blur-sm">
-          <EditorForm data={profileData} onChange={setProfileData} />
+          <EditorForm
+            data={profileData}
+            onChange={setProfileData}
+            theme={theme}
+            onThemeChange={setTheme}
+          />
         </div>
 
         {/* 右侧预览 */}
         <div className="w-1/2">
-          <Preview data={profileData} />
+          <Preview data={profileData} theme={theme} />
         </div>
       </div>
 
       {/* 移动端：只显示预览 */}
       <div className="lg:hidden flex-1 relative">
-        <Preview data={profileData} />
+        <Preview data={profileData} theme={theme} />
 
         {/* 编辑按钮 */}
         {!isEditing && (
           <button
             onClick={() => setIsEditing(true)}
-            className="fixed bottom-6 right-6 w-14 h-14 bg-primary text-white rounded-full shadow-lg hover:bg-primary/90 transition-all duration-200 flex items-center justify-center z-50"
+            className={`fixed bottom-6 right-6 w-14 h-14 ${themeStyle.primary} text-white rounded-full shadow-lg hover:opacity-90 transition-all duration-200 flex items-center justify-center z-50`}
           >
             <Edit className="w-6 h-6" />
           </button>
@@ -378,15 +473,22 @@ export default function LinkInBioPage() {
               </button>
             </div>
             <div className="flex-1 overflow-y-auto">
-              <EditorForm data={profileData} onChange={setProfileData} />
+              <EditorForm
+                data={profileData}
+                onChange={setProfileData}
+                theme={theme}
+                onThemeChange={setTheme}
+              />
             </div>
           </div>
         )}
       </div>
 
       {/* Footer */}
-      <footer className="py-6 text-center border-t border-border lg:border-t-0">
-        <p className="text-xs text-muted-foreground">
+      <footer
+        className={`py-6 text-center border-t ${themeStyle.border} lg:border-t-0`}
+      >
+        <p className={`text-xs ${themeStyle.mutedForeground}`}>
           © 2026 {profileData.name}. All rights reserved.
         </p>
       </footer>
