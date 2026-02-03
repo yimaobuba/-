@@ -1,14 +1,13 @@
 import { NextResponse } from 'next/server';
-import { promises as fs } from 'fs';
-import path from 'path';
-
-const DB_PATH = path.join(process.cwd(), 'data', 'db.json');
+import { kv } from '@vercel/kv';
 
 /** 生成随机 6 位字母数字 ID */
 function generateUniqueId(): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const chars =
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let id = '';
   const randomValues = new Uint8Array(6);
+
   if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
     crypto.getRandomValues(randomValues);
     for (let i = 0; i < 6; i++) {
@@ -19,27 +18,14 @@ function generateUniqueId(): string {
       id += chars[Math.floor(Math.random() * chars.length)];
     }
   }
-  return id;
-}
 
-/** 确保 ID 在现有数据中唯一 */
-async function ensureUniqueId(existingIds: Set<string>): Promise<string> {
-  let id: string;
-  let attempts = 0;
-  const maxAttempts = 100;
-  do {
-    id = generateUniqueId();
-    attempts++;
-    if (attempts > maxAttempts) {
-      throw new Error('无法生成唯一 ID');
-    }
-  } while (existingIds.has(id));
   return id;
 }
 
 export async function POST(request: Request) {
   let body: unknown;
 
+  // 解析并校验请求体
   try {
     const text = await request.text();
     if (!text || text.trim() === '') {
@@ -56,54 +42,26 @@ export async function POST(request: Request) {
     );
   }
 
-  let existingData: Array<{ uniqueId: string; data: unknown }> = [];
-  const dataDir = path.dirname(DB_PATH);
+  const uniqueId = generateUniqueId();
 
   try {
-    await fs.mkdir(dataDir, { recursive: true });
-    const content = await fs.readFile(DB_PATH, 'utf-8');
-    const parsed = JSON.parse(content) as unknown;
-    existingData = Array.isArray(parsed) ? parsed : [];
-  } catch (err) {
-    const nodeErr = err as NodeJS.ErrnoException;
-    if (nodeErr?.code !== 'ENOENT') {
-      return NextResponse.json(
-        { error: '读取存储失败' },
-        { status: 500 }
-      );
-    }
-  }
+    // 使用 KV 存储用户数据
+    await kv.set(uniqueId, body);
 
-  const existingIds = new Set(existingData.map((entry) => entry.uniqueId));
-  let uniqueId: string;
-
-  try {
-    uniqueId = await ensureUniqueId(existingIds);
-  } catch {
     return NextResponse.json(
-      { error: '生成唯一 ID 失败' },
+      { uniqueId },
+      { status: 200 }
+    );
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : '未知错误';
+
+    return NextResponse.json(
+      {
+        error: '保存数据失败',
+        message,
+      },
       { status: 500 }
     );
   }
-
-  const record = { uniqueId, data: body };
-  existingData.push(record);
-
-  try {
-    await fs.writeFile(
-      DB_PATH,
-      JSON.stringify(existingData, null, 2),
-      'utf-8'
-    );
-  } catch {
-    return NextResponse.json(
-      { error: '写入存储失败' },
-      { status: 500 }
-    );
-  }
-
-  return NextResponse.json(
-    { uniqueId },
-    { status: 200 }
-  );
 }
