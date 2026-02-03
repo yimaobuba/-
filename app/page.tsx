@@ -229,6 +229,43 @@ function EditorForm({
     })
   }
 
+  const handleSave = async () => {
+    try {
+      const userData = {
+        profileData: data,
+        theme: theme,
+      }
+
+      const response = await fetch("/api/save", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(userData),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || "保存失败")
+      }
+
+      const result = await response.json()
+      const uniqueId = result.uniqueId
+
+      if (uniqueId) {
+        alert(
+          `保存成功！\n\n你的分享链接：\nvibe-link-bio.vercel.app/u/${uniqueId}`
+        )
+      } else {
+        throw new Error("未收到唯一ID")
+      }
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "保存时发生未知错误"
+      alert(`保存失败：${errorMessage}`)
+    }
+  }
+
   return (
     <div className="h-full overflow-y-auto p-6 space-y-6">
       <h2 className="text-2xl font-bold text-foreground mb-6">编辑资料</h2>
@@ -354,6 +391,16 @@ function EditorForm({
             </div>
           ))}
         </div>
+      </div>
+
+      {/* 保存按钮 */}
+      <div className="pt-4 border-t border-border">
+        <button
+          onClick={handleSave}
+          className="w-full px-4 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-medium flex items-center justify-center gap-2"
+        >
+          保存并获取链接
+        </button>
       </div>
     </div>
   )
