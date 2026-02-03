@@ -1,5 +1,11 @@
 import { NextResponse } from 'next/server';
-import { kv } from '@vercel/kv';
+import { Redis } from '@upstash/redis';
+
+// 使用环境变量初始化 Upstash Redis 客户端
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL!,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+});
 
 /** 生成随机 6 位字母数字 ID */
 function generateUniqueId(): string {
@@ -45,8 +51,8 @@ export async function POST(request: Request) {
   const uniqueId = generateUniqueId();
 
   try {
-    // 使用 KV 存储用户数据
-    await kv.set(uniqueId, body);
+    // 使用 Upstash Redis 存储用户数据
+    await redis.set(uniqueId, body);
 
     return NextResponse.json(
       { uniqueId },
