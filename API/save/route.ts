@@ -1,31 +1,34 @@
-import { kv } from '@vercel/kv';
+import { createClient } from '@vercel/kv';
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
   try {
-    // 这里的日志会在 Vercel 的 Logs 页面显示
-    console.log("收到保存请求...");
-
-    // 关键排查：手动检查变量是否存在
+    // 1. 获取环境变量
     const url = process.env.KV_REST_API_URL;
     const token = process.env.KV_REST_API_TOKEN;
 
+    // 2. 检查环境变量是否存在
     if (!url || !token) {
       return NextResponse.json({ 
-        error: '数据库配置缺失', 
-        details: `URL: ${url ? '已存在' : '缺失'}, Token: ${token ? '已存在' : '缺失'}` 
+        error: '关键报错：Vercel环境变量缺失', 
+        details: '请去Settings确认KV变量是否存在，并务必执行Redeploy' 
       }, { status: 500 });
     }
 
+    // 3. 初始化数据库并写入
+    const kv = createClient({ url, token });
     const userData = await request.json();
     const uniqueId = Math.random().toString(36).substring(2, 8);
-
-    // 尝试写入
+    
     await kv.set(`user:${uniqueId}`, userData);
 
     return NextResponse.json({ uniqueId });
-  } catch (error: any) {
-    console.error("保存过程报错:", error.message);
-    return NextResponse.json({ error: '服务器写入失败', details: error.message }, { status: 500 });
+
+  } catch (err: any) {
+    // 4. 将最原始的报错信息 (err.message) 返回给前端
+    return NextResponse.json({ 
+      error: '后端执行异常', 
+      details: err.message || '未知错误详情'
+    }, { status: 500 });
   }
 }
