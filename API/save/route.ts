@@ -1,7 +1,12 @@
-import { kv } from '@vercel/kv';
+import { createClient } from '@vercel/kv';
 import { NextResponse } from 'next/server';
 
-// 生成 6 位随机 ID 的辅助函数
+// 手动初始化客户端，确保变量名绝对匹配
+const kv = createClient({
+  url: process.env.KV_REST_API_URL!,
+  token: process.env.KV_REST_API_TOKEN!,
+});
+
 function generateShortId() {
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
   let result = '';
@@ -13,26 +18,22 @@ function generateShortId() {
 
 export async function POST(request: Request) {
   try {
-    // 1. 获取前端传来的用户配置数据
     const userData = await request.json();
-
-    if (!userData) {
-      return NextResponse.json({ error: '数据不能为空' }, { status: 400 });
+    
+    // 调试：如果变量缺失，在日志里打印出来（别担心，线上日志只有你能看）
+    if (!process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) {
+        return NextResponse.json({ error: '环境变量配置缺失' }, { status: 500 });
     }
 
-    // 2. 生成一个唯一的 ID
     const uniqueId = generateShortId();
-
-    // 3. 将数据存入 Vercel KV 数据库
-    // Key 是生成的 ID，Value 是用户的数据对象
-    // 我们设置一个过期时间（比如 30 天，单位是秒），防止数据库爆满，也可以不设
+    
+    // 存储数据
     await kv.set(`user:${uniqueId}`, userData);
 
-    // 4. 返回成功的 ID 给前端
     return NextResponse.json({ uniqueId });
     
-  } catch (error) {
-    console.error('保存失败:', error);
-    return NextResponse.json({ error: '服务器内部错误，保存失败' }, { status: 500 });
+  } catch (error: any) {
+    console.error('保存失败详情:', error);
+    return NextResponse.json({ error: error.message || '保存失败' }, { status: 500 });
   }
 }
