@@ -1,73 +1,25 @@
+import { createClient } from '@vercel/kv';
 import { NextResponse } from 'next/server';
-import { Redis } from '@upstash/redis';
 
-// 使用环境变量初始化 Upstash Redis 客户端
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL!,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+const kv = createClient({
+  url: process.env.KV_REST_API_URL || '',
+  token: process.env.KV_REST_API_TOKEN || '',
 });
 
-/** 生成随机 6 位字母数字 ID */
-function generateUniqueId(): string {
-  const chars =
-    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let id = '';
-  const randomValues = new Uint8Array(6);
-
-  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
-    crypto.getRandomValues(randomValues);
-    for (let i = 0; i < 6; i++) {
-      id += chars[randomValues[i]! % chars.length];
-    }
-  } else {
-    for (let i = 0; i < 6; i++) {
-      id += chars[Math.floor(Math.random() * chars.length)];
-    }
-  }
-
-  return id;
-}
-
 export async function POST(request: Request) {
-  let body: unknown;
-
-  // 解析并校验请求体
   try {
-    const text = await request.text();
-    if (!text || text.trim() === '') {
-      return NextResponse.json(
-        { error: '请求体为空' },
-        { status: 400 }
-      );
-    }
-    body = JSON.parse(text) as unknown;
-  } catch {
-    return NextResponse.json(
-      { error: '无效的 JSON 格式' },
-      { status: 400 }
-    );
-  }
+    const userData = await request.json();
+    const uniqueId = Math.random().toString(36).substring(2, 8);
 
-  const uniqueId = generateUniqueId();
+    // 尝试写入
+    await kv.set(`user:${uniqueId}`, userData);
 
-  try {
-    // 使用 Upstash Redis 存储用户数据
-    await redis.set(uniqueId, body);
-
-    return NextResponse.json(
-      { uniqueId },
-      { status: 200 }
-    );
-  } catch (error) {
-    const message =
-      error instanceof Error ? error.message : '未知错误';
-
-    return NextResponse.json(
-      {
-        error: '保存数据失败',
-        message,
-      },
-      { status: 500 }
-    );
+    return NextResponse.json({ uniqueId });
+  } catch (error: any) {
+    // 💡 重点：如果失败，弹窗会显示 V3-Final，这样我们就知道代码更新了
+    return NextResponse.json({ 
+      error: 'V3-Final-数据库连接失败', 
+      details: error.message 
+    }, { status: 500 });
   }
 }
