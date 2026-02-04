@@ -231,40 +231,28 @@ function EditorForm({
 
   const handleSave = async () => {
     try {
-      const userData = {
-        profileData: data,
-        theme: theme,
-      }
-
+      // 这里的 userData 必须对应你定义的 state 变量名
       const response = await fetch("/api/save", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(userData),
-      })
-
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data), 
+      });
+  
+      const result = await response.json();
+  
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.error || "保存失败")
+        // 关键：这里会弹出后端给出的真正原因（比如：数据库配置缺失）
+        throw new Error(result.details || result.error || "未知后端错误");
       }
-
-      const result = await response.json()
-      const uniqueId = result.uniqueId
-
-      if (uniqueId) {
-        alert(
-          `保存成功！\n\n你的分享链接：\nvibe-link-bio.vercel.app/u/${uniqueId}`
-        )
-      } else {
-        throw new Error("未收到唯一ID")
-      }
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "保存时发生未知错误"
-      alert(`保存失败：${errorMessage}`)
+  
+      alert(`🎉 保存成功！你的专属 ID 是: ${result.uniqueId}`);
+      console.log("生成的 ID:", result.uniqueId);
+    } catch (error: any) {
+      // 关键：这里会显示具体的报错，而不是那句死板的“保存数据失败”
+      alert(`❌ 具体的报错是: ${error.message}`);
+      console.error("详细错误:", error);
     }
-  }
+  };
 
   return (
     <div className="h-full overflow-y-auto p-6 space-y-6">
