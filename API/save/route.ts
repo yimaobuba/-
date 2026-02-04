@@ -1,5 +1,9 @@
 import { createClient } from '@vercel/kv';
 import { NextResponse } from 'next/server';
+const kv = createClient({
+  url: 'https://full-crayfish-35919.upstash.io',
+  token: 'AYxPAAIncDE1ZjE1ZjhkOTQ3NjU0MThhYTlkYTA4MzdjYzg2MTg4YnAxMzU5MTk',
+});
 
 export async function POST(request: Request) {
   try {
