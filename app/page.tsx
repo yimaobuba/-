@@ -231,29 +231,33 @@ function EditorForm({
 
   const handleSave = async () => {
     try {
-      // 这里的 userData 必须对应你定义的 state 变量名
       const response = await fetch("/api/save", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        // 确保这里的变量名是你代码里定义的那个 (data 或 userData)
         body: JSON.stringify(data), 
       });
-  
+
       const result = await response.json();
-  
+
       if (!response.ok) {
-        // 关键：这里会弹出后端给出的真正原因（比如：数据库配置缺失）
-        throw new Error(result.details || result.error || "未知后端错误");
+        throw new Error(result.details || result.error || "保存失败");
       }
-  
-      alert(`🎉 保存成功！你的专属 ID 是: ${result.uniqueId}`);
-      console.log("生成的 ID:", result.uniqueId);
+
+      // 💡 核心改动：拼接完整链接
+      // window.location.origin 会自动获取当前网址（如 https://vibe-link-bio.vercel.app）
+      const shareUrl = `${window.location.origin}/u/${result.uniqueId}`;
+
+      // 1. 弹窗提示并显示完整链接
+      alert(`🎉 保存成功！\n\n你的专属链接是：\n${shareUrl}\n\n点击“确定”将直接在新窗口打开它。`);
+
+      // 2. 自动在新标签页打开用户的个人主页
+      window.open(shareUrl, '_blank');
+
     } catch (error: any) {
-      // 关键：这里会显示具体的报错，而不是那句死板的“保存数据失败”
       alert(`❌ 具体的报错是: ${error.message}`);
-      console.error("详细错误:", error);
     }
   };
-
   return (
     <div className="h-full overflow-y-auto p-6 space-y-6">
       <h2 className="text-2xl font-bold text-foreground mb-6">编辑资料</h2>
